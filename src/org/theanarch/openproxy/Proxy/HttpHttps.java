@@ -17,23 +17,17 @@ public class HttpHttps {
         this.thread = thread;
 
         Pattern pattern = Pattern.compile("(ET|ONNECT|OST) (.+)(://|:)(.+) HTTP/(1\\.[01])", Pattern.CASE_INSENSITIVE);
+        String response = readLine();
+        Matcher matcher = pattern.matcher(response.split("\r\n")[0]);
 
-        for(int i = 0; i < 3000; i++){
-            String response = readLine();
-            Matcher matcher = pattern.matcher(response.split("\r\n")[0]);
-
-            if(!response.equals("")){
-                if(matcher.matches()){
-                    if(matcher.group(1).equals("ONNECT")){
-                        System.err.println("CONNECT");
-                        connect(matcher);
-                    }else if(matcher.group(1).equals("ET") || matcher.group(1).equals("OST")){
-                        URL url = new URL(matcher.group(2)+matcher.group(3)+matcher.group(4));
-                        System.err.println("GET");
-                        get(url, response);
-                    }
-                }
-                break;
+        if(matcher.matches()){
+            if(matcher.group(1).equals("ONNECT")){
+                System.err.println("CONNECT");
+                connect(matcher);
+            }else if(matcher.group(1).equals("ET") || matcher.group(1).equals("OST")){
+                URL url = new URL(matcher.group(2)+matcher.group(3)+matcher.group(4));
+                System.err.println("GET");
+                get(url, response);
             }
         }
     }
