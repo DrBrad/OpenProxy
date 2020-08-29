@@ -1,10 +1,12 @@
 # OpenProxy
 ===========
+
 This is a proxy server and doesn't contain any client.
 All of the proxies run on the same port. The default port is: ```8080```
 
 # Supports
 -----------
+
 This repo currently supports the following and I plan to implement the rest later on.
 
 - [x] Socks4
@@ -20,6 +22,7 @@ This repo currently supports the following and I plan to implement the rest late
 
 # How to run
 -----------
+
 Example:
 ```
 java -jar OpenProxy.jar
@@ -30,4 +33,5 @@ We take the first byte as we would with a regular socks proxy and check if the b
 
 # License
 -----------
+
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE COPYRIGHT HOLDERS OR ANYONE DISTRIBUTING THE SOFTWARE BE LIABLE FOR ANY DAMAGES OR OTHER LIABILITY, WHETHER IN CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE
