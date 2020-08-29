@@ -2,7 +2,7 @@ OpenProxy
 ===========
 
 This is a proxy server and doesn't contain any client.
-All of the proxies run on the same port. The default port is: ```8080```
+All of the proxies run on the same port, the default port is: ```8080```
 
 Supports
 -----------
