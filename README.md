@@ -16,6 +16,7 @@ This repo currently supports the following and I plan to implement the rest late
 - [ ] Shadow Socks
 - [ ] SMTP
 - [ ] POP
+- [ ] DNS
 - [ ] UPnP support *Completed however not implemented in current version*
 
 
