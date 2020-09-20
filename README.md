@@ -18,6 +18,7 @@ This repo currently supports the following and I plan to implement the rest late
 - [ ] POP
 - [ ] DNS
 - [ ] SSH
+- [ ] IRC
 - [ ] UPnP support *Completed however not implemented in current version*
 
 
