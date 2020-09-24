@@ -27,36 +27,27 @@ public class Tunnel extends Thread {
     @Override
     public void run(){
         try{
-            socket.setSoTimeout(1000);
-            socket.setKeepAlive(true);
-            socket.setTcpNoDelay(true);
+            socket.setSoTimeout(5000);
+            socket.setKeepAlive(false);
 
             clientIn = socket.getInputStream();
             clientOut = socket.getOutputStream();
 
-            Commons commons = null;
+            Commons commons;
             byte socksVersion = getByte();
 
         //SOCKS5 PROXY
             if(socksVersion == 0x05){
-                socket.setSoTimeout(15);
-                socket.setKeepAlive(false);
-
                 commons = new Socks5(this);
 
         //SOCKS4 PROXY
             }else if(socksVersion == 0x04){
-                socket.setSoTimeout(15);
-                socket.setKeepAlive(false);
-
                 commons = new Socks4(this);
 
         //HTTP|HTTPS PROXY
             }else if(socksVersion == 67 || socksVersion == 71 || socksVersion == 80){
-                socket.setSoTimeout(1000);
-                socket.setKeepAlive(true);
-
                 new HttpHttps(this);
+                relay();
 
                 quickClose(socket);
                 quickClose(server);
@@ -95,54 +86,74 @@ public class Tunnel extends Thread {
     }
 
 
-    //BETTER
     public void relay(){
-        byte[] buffer = new byte[4096];
-        int length;
-        boolean active = true;
-        while(active){
-            //CLIENT TO SERVER
-            try{
-                length = clientIn.read(buffer);
-            }catch(InterruptedIOException e){
-                length = 0;
-            }catch(IOException e){
-                length = -1;
-            }catch(Exception e){
-                length = -1;
-            }
-
-            if(length < 0){
-                active = false;
-            }else if(length > 0){
+        Thread thread = new Thread(new Runnable(){
+            @Override
+            public void run(){
                 try{
-                    serverOut.write(buffer, 0, length);
-                    serverOut.flush();
+                    while(!socket.isClosed() && !server.isClosed() && !socket.isInputShutdown() && !server.isOutputShutdown() && !isInterrupted()){
+                        byte[] buffer = new byte[4096];
+                        int length;
+
+                        try{
+                            length = clientIn.read(buffer);
+                        }catch(InterruptedIOException e){
+                            length = 0;
+                        }catch(IOException e){
+                            length = -1;
+                        }catch(Exception e){
+                            length = -1;
+                        }
+
+                        if(length < 0){
+                            socket.shutdownInput();
+                            server.shutdownOutput();
+                            break;
+                        }else if(length > 0){
+                            try{
+                                serverOut.write(buffer, 0, length);
+                                serverOut.flush();
+                            }catch(Exception e){
+                            }
+                        }
+                    }
                 }catch(Exception e){
                 }
             }
+        });
 
+        thread.start();
 
-            //SERVER TO CLIENT
-            try{
-                length = serverIn.read(buffer);
-            }catch(InterruptedIOException e){
-                length = 0;
-            }catch(IOException e){
-                length = -1;
-            }catch(Exception e){
-                length = -1;
-            }
+        try{
+            byte[] buffer = new byte[4096];
+            int length;
 
-            if(length < 0){
-                active = false;
-            }else if(length > 0){
+            while(!socket.isClosed() && !server.isClosed() && !server.isInputShutdown() && !socket.isOutputShutdown() && !thread.isInterrupted()){
                 try{
-                    clientOut.write(buffer, 0, length);
-                    clientOut.flush();
+                    length = serverIn.read(buffer);
+                }catch(InterruptedIOException e){
+                    length = 0;
+                }catch(IOException e){
+                    length = -1;
                 }catch(Exception e){
+                    length = -1;
+                }
+
+                if(length < 0){
+                    server.shutdownInput();
+                    socket.shutdownOutput();
+                    break;
+                }else if(length > 0){
+                    try{
+                        clientOut.write(buffer, 0, length);
+                        clientOut.flush();
+                    }catch(Exception e){
+                    }
                 }
             }
+
+            thread.interrupt();
+        }catch(Exception e){
         }
     }
 
