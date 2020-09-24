@@ -19,7 +19,7 @@ This repo currently supports the following and I plan to implement the rest late
 - [ ] DNS
 - [ ] SSH
 - [ ] IRC
-- [ ] UPnP support *Completed however not implemented in current version*
+- [x] UPnP support
 
 
 How to run
