@@ -1,12 +1,8 @@
-package org.theanarch.openproxy;
+package unet.openproxy;
 
-import org.theanarch.openproxy.Proxy.Proxy;
-
-public class Main {
+public class UPnPTest {
 
     public static void main(String[] args){
-        new Proxy();
-
         UPnP uPnP = new UPnP();
         if(!uPnP.isMappedTCP(8080)){
             uPnP.openPortTCP(8080);

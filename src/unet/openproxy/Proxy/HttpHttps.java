@@ -1,7 +1,8 @@
-package org.theanarch.openproxy.Proxy;
+package unet.openproxy.Proxy;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.URL;
 import java.util.regex.Matcher;
@@ -31,8 +32,13 @@ public class HttpHttps {
     }
 
     public void connect(Matcher matcher)throws Exception {
-        InetAddress address = InetAddress.getByName(new URL("https://"+matcher.group(2)).getHost());
-        tunnel.server = new Socket(address, Integer.parseInt(matcher.group(4)));
+        InetSocketAddress address = new InetSocketAddress(new URL("https://"+matcher.group(2)).getHost(), Integer.parseInt(matcher.group(4)));
+
+        if(tunnel.proxy.containsRedirect(address)){
+            address = tunnel.proxy.getRedirect(address);
+        }
+
+        tunnel.server = new Socket(address.getAddress(), address.getPort());
         tunnel.serverIn = tunnel.server.getInputStream();
         tunnel.serverOut = tunnel.server.getOutputStream();
 
@@ -43,8 +49,13 @@ public class HttpHttps {
     }
 
     public void get(URL url, String response)throws Exception {
-        InetAddress address = InetAddress.getByName(url.getHost());
-        tunnel.server = new Socket(address, 80);
+        InetSocketAddress address = new InetSocketAddress(url.getHost(), 80);
+
+        if(tunnel.proxy.containsRedirect(address)){
+            address = tunnel.proxy.getRedirect(address);
+        }
+
+        tunnel.server = new Socket(address.getAddress(), address.getPort());
         tunnel.serverIn = tunnel.server.getInputStream();
         tunnel.serverOut = tunnel.server.getOutputStream();
 

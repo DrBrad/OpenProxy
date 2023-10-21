@@ -1,4 +1,4 @@
-package org.theanarch.openproxy.Proxy;
+package unet.openproxy.Proxy;
 
 public interface Commons {
 

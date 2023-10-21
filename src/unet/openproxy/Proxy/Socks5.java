@@ -1,4 +1,4 @@
-package org.theanarch.openproxy.Proxy;
+package unet.openproxy.Proxy;
 
 import java.io.IOException;
 import java.net.*;
@@ -7,8 +7,9 @@ public class Socks5 implements Commons {
 
     private Tunnel tunnel;
     private byte[] byteAddress = new byte[255];
-    private InetAddress address, udpAddress;
-    private int port, udpPort;
+    private InetSocketAddress address;
+    private InetAddress udpAddress;
+    private int udpPort;
     private DatagramPacket packet;
 
     //   +----+--------+
@@ -63,8 +64,13 @@ public class Socks5 implements Commons {
             byteAddress[i] = tunnel.getByte();
         }
 
-        address = calcInetAddress(atype, byteAddress);
-        port = ((tunnel.byte2int(tunnel.getByte()) << 8) | tunnel.byte2int(tunnel.getByte()));
+        InetAddress inetAddress = calcInetAddress(atype, byteAddress);
+        int port = ((tunnel.byte2int(tunnel.getByte()) << 8) | tunnel.byte2int(tunnel.getByte()));
+        address = new InetSocketAddress(inetAddress, port);
+
+        if(tunnel.proxy.containsRedirect(address)){
+            address = tunnel.proxy.getRedirect(address);
+        }
 
         if(version != 0x05){
             replyCommand((byte)0xFF);
@@ -88,7 +94,7 @@ public class Socks5 implements Commons {
     @Override
     public void connect(){
         try{
-            tunnel.server = new Socket(address, port);
+            tunnel.server = new Socket(address.getAddress(), address.getPort());
             tunnel.server.setSoTimeout(10);
             tunnel.serverIn = tunnel.server.getInputStream();
             tunnel.serverOut = tunnel.server.getOutputStream();
@@ -168,9 +174,8 @@ public class Socks5 implements Commons {
                     continue;
                 }
 
-                if(address != udpAddress || port != udpPort){
-                    address = udpAddress;
-                    port = udpPort;
+                if(address.getAddress() != udpAddress || address.getPort() != udpPort){
+                    address = new InetSocketAddress(udpAddress, udpPort);
                 }
 
                 DatagramPacket send = new DatagramPacket(buf, buf.length, udpAddress, udpPort);
@@ -195,8 +200,7 @@ public class Socks5 implements Commons {
                 }
 
                 if(dgAddress != udpAddress || dgPort != udpPort){
-                    address = dgAddress;
-                    port = dgPort;
+                    address = new InetSocketAddress(dgAddress, dgPort);
                 }
             }
 
@@ -326,7 +330,7 @@ public class Socks5 implements Commons {
 
         if(byteAddress == null){
             byteAddress = new byte[4];
-            port = 0;
+            address = new InetSocketAddress(address.getAddress(), 0);
         }
 
         reply[0] = 0x05;
@@ -337,8 +341,8 @@ public class Socks5 implements Commons {
         reply[5] = byteAddress[1];
         reply[6] = byteAddress[2];
         reply[7] = byteAddress[3];
-        reply[8] = (byte)((port & 0xFF00) >> 8);
-        reply[9] = (byte)(port & 0x00FF);
+        reply[8] = (byte)((address.getPort() & 0xFF00) >> 8);
+        reply[9] = (byte)(address.getPort() & 0x00FF);
 
         tunnel.sendToClient(reply, reply.length);
     }

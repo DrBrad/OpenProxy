@@ -1,4 +1,4 @@
-package org.theanarch.openproxy.Proxy;
+package unet.openproxy.Proxy;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -9,6 +9,7 @@ import java.net.Socket;
 
 public class Tunnel extends Thread {
 
+    public Proxy proxy;
     public Socket socket, server;
     public InputStream clientIn, serverIn;
     public OutputStream clientOut, serverOut;
@@ -20,7 +21,8 @@ public class Tunnel extends Thread {
     //   | 1  |    1     | 1 to 255 |
     //   +----+----------+----------+
 
-    public Tunnel(Socket socket){
+    public Tunnel(Proxy proxy, Socket socket){
+        this.proxy = proxy;
         this.socket = socket;
     }
 
@@ -34,49 +36,50 @@ public class Tunnel extends Thread {
             clientOut = socket.getOutputStream();
 
             Commons commons;
-            byte socksVersion = getByte();
 
-        //SOCKS5 PROXY
-            if(socksVersion == 0x05){
-                commons = new Socks5(this);
+            switch(getByte()){
+                case 0x05:
+                    commons = new Socks5(this);
+                    break;
 
-        //SOCKS4 PROXY
-            }else if(socksVersion == 0x04){
-                commons = new Socks4(this);
+                case 0x04:
+                    commons = new Socks4(this);
+                    break;
 
-        //HTTP|HTTPS PROXY
-            }else if(socksVersion == 67 || socksVersion == 71 || socksVersion == 80){
-                new HttpHttps(this);
-                relay();
+                case 67:
+                case 71:
+                case 80:
+                    new HttpHttps(this);
+                    relay();
 
-                quickClose(socket);
-                quickClose(server);
-                return;
+                    quickClose(socket);
+                    quickClose(server);
+                    return;
 
-        //POSSIBLE PING, JUST KILL IT...
-            }else{
-                quickClose(socket);
-                return;
+                default:
+                    quickClose(socket);
+                    return;
             }
 
-            byte command = commons.getCommand();
-        //WORKING PERFECTLY - SOCKS 5
-            if(command == 0x01){
-                System.out.println("CONNECT");
-                commons.connect();
-                relay();
+            switch(commons.getCommand()){
+                case 0x01:
+                    System.out.println("CONNECT");
+                    commons.connect();
+                    relay();
+                    break;
 
-        //WORKING PERFECTLY - SOCKS 5
-            }else if(command == 0x02){
-                System.out.println("BIND");
-                commons.bind();
-                relay();
+                case 0x02:
+                    System.out.println("BIND");
+                    commons.bind();
+                    relay();
+                    break;
 
-        //WORKING PERFECTLY
-            }else if(command == 0x03){
-                System.out.println("UDP");
-                ((Socks5)commons).udp();
+                case 0x03:
+                    System.out.println("UDP");
+                    ((Socks5)commons).udp();
+                    break;
             }
+
         }catch(Exception e){
             e.printStackTrace();
         }finally{

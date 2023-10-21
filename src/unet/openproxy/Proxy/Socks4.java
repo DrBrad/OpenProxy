@@ -1,16 +1,12 @@
-package org.theanarch.openproxy.Proxy;
+package unet.openproxy.Proxy;
 
-import java.net.InetAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.net.UnknownHostException;
+import java.net.*;
 
 public class Socks4 implements Commons {
 
     private Tunnel tunnel;
     private byte[] byteAddress = new byte[4], bytePort = new byte[2];
-    private InetAddress address;
-    private int port;
+    private InetSocketAddress address;
 
     public Socks4(Tunnel tunnel){
         this.tunnel = tunnel;
@@ -33,8 +29,13 @@ public class Socks4 implements Commons {
             replyCommand((byte)91);
         }
 
-        address = calcInetAddress();
-        port = ((tunnel.byte2int(bytePort[0]) << 8) | tunnel.byte2int(bytePort[1]));
+        InetAddress inetAddress = calcInetAddress();
+        int port = ((tunnel.byte2int(bytePort[0]) << 8) | tunnel.byte2int(bytePort[1]));
+        address = new InetSocketAddress(inetAddress, port);
+
+        if(tunnel.proxy.containsRedirect(address)){
+            address = tunnel.proxy.getRedirect(address);
+        }
 
         replyCommand((byte)90);
 
@@ -44,7 +45,7 @@ public class Socks4 implements Commons {
     @Override
     public void connect(){
         try{
-            tunnel.server = new Socket(address, port);
+            tunnel.server = new Socket(address.getAddress(), address.getPort());
             tunnel.server.setSoTimeout(10);
             tunnel.serverIn = tunnel.server.getInputStream();
             tunnel.serverOut = tunnel.server.getOutputStream();
